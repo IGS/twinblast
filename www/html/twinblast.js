@@ -1,12 +1,16 @@
 Ext.onReady(function(){
 
-    var GUIBLAST_URL = '/cgi-bin/twinblast_git/guiblast';
+	// Path to guiblast CGI script
+	var GUIBLAST_URL = '/cgi-bin/guiblast'; 
+
+	// Path to TwinBlast DB access component for annotation/curation
+	var CURATION_URL = '/cgi-bin/twinblastDB'; 
 
     // Pull out what's in the URL
     var vars = getUrlVars();
 
     var id = vars.id ? unescape(vars.id) : undefined;
-    var qlist = vars.qlist ? unescape(vars.qlist) : undefined;
+    //var qlist = vars.qlist ? unescape(vars.qlist) : undefined;
     // We need these three if we're going to use a single file
     var file = vars.file ? unescape(vars.file) : undefined;
     var list = vars.list ? unescape(vars.list) : undefined;
@@ -18,7 +22,7 @@ Ext.onReady(function(){
     var right_file = vars.rightfile ? unescape(vars.rightfile) : undefined;
 
     //If we have an ID and a file we'll start with the form collapsed
-    var collapse_form = false;
+    var collapse_form = true;
     var single_file = true;
 
     var runner = new Ext.util.TaskRunner();
@@ -40,9 +44,9 @@ Ext.onReady(function(){
         single_file = true,
         show_list = true;
     }
-    if(qlist) {
+    /*if(qlist) {
         show_list = true;
-    }
+    }*/
 
     var pwidth = Ext.getBody().getViewSize().width/2;
     if(show_list) {
@@ -72,7 +76,6 @@ Ext.onReady(function(){
         width: pwidth,
         flex: 1
     }));
-
 
     var single_list_form = Ext.create('Ext.form.FieldContainer', ({
         defaultType: 'textfield',
@@ -143,6 +146,58 @@ Ext.onReady(function(){
                 single_list_form.show();
             }
         }*/]});
+
+	var annot_radiogroup = Ext.create('Ext.form.RadioGroup', {
+		fieldLabel: 'LGT detected',
+		xtype: 'radio',
+		columns: 2,
+		width: '100%',
+		items: [
+			{
+			boxLabel: 'yes',
+			inputValue: 'yes',
+			name: 'annotation',
+			id: 'radio1'
+			},{
+			boxLabel: 'no',
+			inputValue: 'no',
+			name: 'annotation',
+			id: 'radio2'
+			},{
+			boxLabel: 'maybe',
+			inputValue: 'maybe',
+			name: 'annotation',
+			id: 'radio3'
+			},{
+			boxLabel: 'custom',
+			inputValue: 'custom',
+			name: 'annotation',
+			id: 'radio4',
+				listeners: {
+					render: function() {
+						this.boxLabelEl.update("");
+						this.field = Ext.create('Ext.form.field.Text', {
+							renderTo: this.boxLabelEl,
+							width: 100,
+							id: 'custom_value',
+							disabled: !this.getValue()
+						});
+						this.boxLabelEl.setStyle('display','inline-block');
+					},
+					change: function() {
+						this.field.setDisabled(!this.getValue());
+					}
+				}
+
+			},{
+			xtype: 'button',
+			text: 'curate',
+            handler: function() {
+                curatePair();
+            	}  
+			}]
+	});
+
     var form = Ext.create('Ext.form.Panel', ({
 //        layout: 'fit',
 //        id: 'top',
@@ -153,27 +208,24 @@ Ext.onReady(function(){
         defaults: {flex: 1},
         items: [
             {xtype: 'fieldset',
-             title: 'Config',
+             title: 'Analyze',
              layout: 'vbox',
              defaultType: 'textfield',
              items: [
-                 {fieldLabel: 'List of queries (Optional)',
-                  name: 'qlist',
-                  value: qlist,
-                  width: '100%'
-                 },
-                 {fieldLabel: 'ID (Optional)',
+                 {fieldLabel: 'ID (prefix only)',
                   name: 'id',
                   value: id,
+                  id: 'id',
                   width: 300 
                  },
+				annot_radiogroup,
              ]},
             {xtype: 'fieldset',
-             title: 'BLAST lists',
+             title: 'BLAST input',
              items: [
                  type_radiogroup,
-                 single_list_form]
-                 //double_list_form]
+                 single_list_form,
+                 double_list_form]
            }]
     }));
     
@@ -211,7 +263,7 @@ Ext.onReady(function(){
     var linkStore = Ext.create('Ext.data.Store', {
         storeId:'linkStore',
         //model: 'links',
-        fields: ['name'],
+        fields: ['name', 'annot'],
         pageSize: 500,
         proxy: {
             type: 'ajax',
@@ -228,7 +280,9 @@ Ext.onReady(function(){
     });
     var gridpanel = Ext.create('Ext.grid.Panel', ({
         store: linkStore,
-        columns: [{header: 'link', dataIndex: 'name', flex: 1}],
+        columns: [{header: 'link', dataIndex: 'name', flex: 1},
+				  {header: 'curation note', dataIndex: 'annot', flex: 1}
+			],
         region: 'east',
         forcefit: true,
         width: 250,
@@ -264,16 +318,7 @@ Ext.onReady(function(){
         layout: 'border',
         autoScroll: true,
         defaults: {split: true},
-//        items: [{
-/*            defaults: {frame: true},
-            region: 'center',
-            title: 'foobar',
-            height: 500,*/
         items: [toppanel,leftpanel,rightpanel,gridpanel],
-/*            layout: 'hbox',
-            align: 'stretchmax',
-            pack: 'start'*/
-//        }]
         listeners: {
             afterrender: onAfterRender 
         }
@@ -292,17 +337,33 @@ Ext.onReady(function(){
         return vars;
     } 
 
+    function genCustomList() {
+    } 
+
+    function curatePair() {
+		var seq_id = Ext.ComponentQuery.query('#id')[0].getValue();
+		var annot_note = form.getForm().getValues()['annotation'];
+		if(annot_note == 'custom'){
+			annot_note = Ext.ComponentQuery.query('#custom_value')[0].getValue();
+		}
+		var annot_config = {
+			'seq_id': seq_id,
+			'annot_note': annot_note
+		}
+		// Simple check to ensure that this only proceeds if ID is defined
+		if(seq_id){
+			console.log('made it');
+			Ext.Ajax.request({
+				url: CURATION_URL,
+				params: annot_config
+			});
+			reloadPanels({});
+		}
+    } 
+
     function reloadPanels(newvals) {
         var vals = form.getValues();
         Ext.apply(vals,newvals);
-        console.log(vals);
-/*        if(vals.qlist) {
-            Ext.Ajax.request({
-                url: '/cgi-bin/guiblast',
-
-            linkStore.proxy.extraParams = {'qlist': qlist};
-            linkStore.load();
-        }*/
         if(vals.num_lists== "1" && (vals.blast || vals.blast_file)){ //&& vals.id) {
             var newconfig = {
                 'leftsuff' : vals.suff1,
@@ -321,9 +382,9 @@ Ext.onReady(function(){
             }
             if((vals.id && linkStore.getCount() == 0) || !vals.id) {
             newconfig['printlist'] = 1;
-            if(vals.qlist) {
+            /*if(vals.qlist) {
                 newconfig.qlist = vals.qlist;
-            }
+            }*/
             linkStore.proxy.extraParams = newconfig;
             linkStore.load({callback: function(records,operation,success) {
                 if(!records || (records && records.length == 0)) {
@@ -338,11 +399,9 @@ Ext.onReady(function(){
                     gridpanel.doLayout();
                 }
                 if(!success) {
-                    
                 }
             }});
             }
-//            reloadPanel(newconfig,gridpanel);
             
             // Set the URL
             setUrlVars({
@@ -350,8 +409,8 @@ Ext.onReady(function(){
                 'rightsuff' : vals.suff2,
                 'id': vals.id,
                 'file' : vals.blast_file,
-                'list' : vals.blast,
-                'qlist': vals.qlist
+                'list' : vals.blast
+                //'qlist': vals.qlist
             });
         
         }else if(vals.num_lists == "2" && vals.blast1 && vals.blast2 && vals.id) {
@@ -365,17 +424,14 @@ Ext.onReady(function(){
             reloadPanel(config,leftpanel);
             config['list'] = vals.blast2;
             reloadPanel(config,rightpanel);
-//            config['printlist'] = 1;
-
             if(!vals.id) {
-//            reloadPanel(config,gridpanel);
             }
             // Set the URL            
             setUrlVars({
                 'leftfile' : vals.blast1,
                 'rightfile' : vals.blast2,
-                'id': vals.id,
-                'qlist' : vals.qlist
+                'id': vals.id
+                //'qlist' : vals.qlist
             });
         
         }
@@ -400,8 +456,6 @@ Ext.onReady(function(){
             failure: function(response) {
                   vp.setLoading('Hmmm... I appear to be having trouble somewhere. Just wait a second and it might come back.');
                   setPanelsLoading(false);
-//                Ext.Msg.alert('Error', 'Had a problem loading '+ id +
-//                '.<br/>The server may be a bit overloaded. Give it another try.');
             }
         });            
     }
@@ -419,28 +473,19 @@ Ext.onReady(function(){
                     panel.setLoading(false);
                     vp.setLoading(res.message);
                     setPanelsLoading(false);
-                    config.printlist =0;
                     checkStatusTask.args = [config];
                     checkStatusTask.start();
                 }
                 else {
-//                    if(config.printlist) {
-//                        panel.getStore().loadData(res.root);
-//                    }
-//                    else {
                         panel.update(response.responseText);
-//                    }
                     vp.setLoading(false);
                     panel.setLoading(false);
-                // vp.doLayout();
                 }
             },
             failure: function(response) {
                 panel.setLoading(false);
                 vp.setLoading('Hmmm... I appear to be having trouble somewhere. Just wait a second and it might come back.');
                 setPanelsLoading(false);
-//                Ext.Msg.alert('Error', 'Had a problem loading '+ id + 
-//                '.<br/>The server may be a bit overloaded. Give it another try.');
             }
         }); 
     }
