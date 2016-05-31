@@ -19,6 +19,7 @@ Installation of TwinBlast server requires the following packages be installed:
 
 Apache
 ExtJS
+MySQL
 
 Perl Modules:
 
@@ -31,4 +32,4 @@ URI::Escape
 JSON
 POSIX
 Bio::Graphics
-
+Config::IniFiles

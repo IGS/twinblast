@@ -89,12 +89,12 @@ Ext.onReady(function(){
             name: 'blast_file',
             value: file,
             width: '100%'
-        },{
+        },/*{
             fieldLabel: 'Blast File List (optional)',
             name: 'blast',
             value: list,
             width: '100%'
-        },{
+        },*/{
             fieldLabel: 'Left ID suffix',
             name: 'suff1',
             value: left_suff,
