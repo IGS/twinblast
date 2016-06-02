@@ -10,7 +10,7 @@ Ext.onReady(function(){
     var vars = getUrlVars();
 
     var id = vars.id ? unescape(vars.id) : undefined;
-    //var qlist = vars.qlist ? unescape(vars.qlist) : undefined;
+    var qlist = vars.qlist ? unescape(vars.qlist) : undefined;
     // We need these three if we're going to use a single file
     var file = vars.file ? unescape(vars.file) : undefined;
     var list = vars.list ? unescape(vars.list) : undefined;
@@ -22,7 +22,7 @@ Ext.onReady(function(){
     var right_file = vars.rightfile ? unescape(vars.rightfile) : undefined;
 
     //If we have an ID and a file we'll start with the form collapsed
-    var collapse_form = true;
+    var collapse_form = false;
     var single_file = true;
 
     var runner = new Ext.util.TaskRunner();
@@ -44,9 +44,10 @@ Ext.onReady(function(){
         single_file = true,
         show_list = true;
     }
-    /*if(qlist) {
-        show_list = true;
-    }*/
+
+	if(qlist) {
+		show_list = true;
+	}
 
     var pwidth = Ext.getBody().getViewSize().width/2;
     if(show_list) {
@@ -89,12 +90,12 @@ Ext.onReady(function(){
             name: 'blast_file',
             value: file,
             width: '100%'
-        },/*{
-            fieldLabel: 'Blast File List (optional)',
-            name: 'blast',
-            value: list,
+        },{
+            fieldLabel: 'Query List (optional)',
+            name: 'qlist',
+            value: qlist,
             width: '100%'
-        },*/{
+        },{
             fieldLabel: 'Left ID suffix',
             name: 'suff1',
             value: left_suff,
@@ -369,7 +370,8 @@ Ext.onReady(function(){
                 'leftsuff' : vals.suff1,
                 'rightsuff' : vals.suff2,
                 'list' : vals.blast,
-                'file' : vals.blast_file
+                'file' : vals.blast_file,
+				'qlist': vals.qlist
             };
             
             // Load each panel
@@ -382,9 +384,9 @@ Ext.onReady(function(){
             }
             if((vals.id && linkStore.getCount() == 0) || !vals.id) {
             newconfig['printlist'] = 1;
-            /*if(vals.qlist) {
+            if(vals.qlist) {
                 newconfig.qlist = vals.qlist;
-            }*/
+            }
             linkStore.proxy.extraParams = newconfig;
             linkStore.load({callback: function(records,operation,success) {
                 if(!records || (records && records.length == 0)) {
@@ -409,8 +411,8 @@ Ext.onReady(function(){
                 'rightsuff' : vals.suff2,
                 'id': vals.id,
                 'file' : vals.blast_file,
-                'list' : vals.blast
-                //'qlist': vals.qlist
+                'list' : vals.blast,
+                'qlist': vals.qlist
             });
         
         }else if(vals.num_lists == "2" && vals.blast1 && vals.blast2 && vals.id) {
@@ -430,8 +432,8 @@ Ext.onReady(function(){
             setUrlVars({
                 'leftfile' : vals.blast1,
                 'rightfile' : vals.blast2,
-                'id': vals.id
-                //'qlist' : vals.qlist
+                'id': vals.id,
+                'qlist' : vals.qlist
             });
         
         }

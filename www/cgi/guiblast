@@ -38,6 +38,7 @@ use IPC::Open3;
 use POSIX qw(strftime);
 use DBI;
 use Config::IniFiles;
+use File::Slurp;
 
 my $conf = Config::IniFiles->new( -file => "$ENV{CONF}");
 my $chosen_db = $ENV{CHOSEN_DB};
@@ -56,6 +57,7 @@ my $list = uri_unescape($cgi->param('list'));
 my $id = uri_unescape($cgi->param('id'));
 my $leftsuff = uri_unescape($cgi->param('leftsuff'));
 my $rightsuff = uri_unescape($cgi->param('rightsuff'));
+my $qlist = uri_unescape($cgi->param('qlist'));
 
 my $skip_text_alignments = 0;
 my $max_hits = 20;
@@ -89,6 +91,34 @@ if($file) {
     $fname = basename($file);
     $md5 = md5_hex($file);
 }
+=head
+if($qlist) {
+	$qlist = "$prefix/$qlist";
+    $qlist =~ s/\/\//\//g;
+	my @querys = read_file($qlist); #Tie::File not working correctly
+	my $total = scalar @querys;
+	print "Content-type: text/plain\n\n";
+	print "{total: $total,\nroot: [\n";
+	map {
+		if($_) {
+			chomp $_;
+			# Pull annotation note from DB
+			my $annot_note = $dbh->selectrow_array('SELECT cv.name FROM cv, curation WHERE curation.seq_id=? AND curation.cv_id=cv.id', undef, $_);
+
+			if(not defined $annot_note){
+				$annot_note='';
+			}
+			print to_json({'name' => $_,
+   	                       'annot' => $annot_note
+   	                      }).",\n";
+		}
+	} @querys[$start..$start+$limit];
+	print "]}";
+	$dbh->disconnect();
+	exit;
+}
+=cut
+
 
 # Deal with a bunch of blast files here
 if($list) {
@@ -111,7 +141,7 @@ $index = Bio::Index::Blast->new(-filename => $indexed_file,
 if($indexed && &check_prep_status($md5)) {
 
     if($print_list) {
-        &print_list();
+       	&print_list();
     }
     else {
         &print_html();
@@ -132,12 +162,38 @@ sub print_list {
 #        &make_query_list($files,$list_file);
 #    }
     my @querys;
-    tie @querys, 'Tie::File', $list_file;
+	if($qlist) {
+		$qlist = "$prefix/$qlist";
+    	$qlist =~ s/\/\//\//g;
+		@querys = read_file($qlist);
+	} else {
+		tie @querys, 'Tie::File', $list_file;
+	}
     my $total = scalar @querys;
+
+	# Need to readjust amount of output if the amount present is less than
+	# the limit so that repeat values aren't appended at the end. 
+	if ($total < $limit) {
+		$limit = $total-1; # account for 0 index
+	}
+
+	my $counter = 0;
+
     print "Content-type: text/plain\n\n";
     print "{total: $total,\nroot: [\n";
     map {
-        my @f = split(/\t/, $_);
+        my @f;
+		if($qlist){
+			chomp $querys[$counter];
+			$f[0] = $querys[$counter];
+			
+			if($counter < $total-1) { # account for 0 index
+				$counter++;
+			}
+		} else {
+			@f = split(/\t/, $_);
+		}
+
         if($f[0]) {
 
 			# Pull annotation note from DB
@@ -147,14 +203,14 @@ sub print_list {
 				$annot_note='';
 			}
 
-            print to_json({'name' => $f[0],
-                       'annot' => $annot_note
-                  }).",\n";
-        }
-        else { last; }
-    } @querys[$start..$start+$limit];
-    print "]}";
-    exit;    
+   	        print to_json({'name' => $f[0],
+   	                       'annot' => $annot_note
+   	                      }).",\n";
+   	    }
+   	    else { last; }
+	} @querys[$start..$start+$limit];
+   	print "]}";
+   	exit;    
 }
 
 
