@@ -10,7 +10,7 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <title>Twinblast by rileydavidr</title>
+    <title>TwinBLAST by the Institute for Genome Sciences</title>
   </head>
 
   <body>
@@ -18,22 +18,23 @@
       <div class="inner">
 
         <header>
-          <h1>Twinblast</h1>
+          <h1>TwinBLAST</h1>
           <h2>View 2 blast reports at once</h2>
         </header>
 
         <section id="downloads" class="clearfix">
           <a href="https://github.com/rileydavidr/twinblast/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
           <a href="https://github.com/rileydavidr/twinblast/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/rileydavidr/twinblast" id="view-on-github" class="button"><span>View on GitHub</span></a>
+          <a href="https://sourceforge.net/projects/twinblast/files/twinblast_beta.vdi/download" id="download-vdi" class="button"><span>Download .vdi (~7GB)</span></a>
+          <a href="https://github.com/IGS/twinblast" id="view-on-github" class="button"><span>View on GitHub</span></a>
         </section>
 
         <hr>
 
         <section id="main_content">
-          <h2>TwinBlast - View 2 BLAST reports at once</h2>
+          <h2>TwinBLAST - View 2 BLAST reports at once</h2>
 
-<p>TwinBlast is a web-based tool for viewing 2 BLAST reports simultaneously
+<p>TwinBLAST is a web-based tool for viewing 2 BLAST reports simultaneously
 side-by-side. It uses ExtJS (<a href="http://www.sencha.com/products/extjs/">www.sencha.com/products/extjs/</a>) to provide 2
 independantly scrollable panels. BioPerl (<a href="http://www.bioperl.org">www.bioperl.org</a>) is used to index
 raw BLAST reports and Bio::Graphics is used to draw pictograms of the BLAST
@@ -43,15 +44,38 @@ hits.</p>
 of <i>Drosophila mauritiana</i> lateral gene transfers loaded into it. Those results are also available 
 <a href="http://lgt.igs.umaryland.edu/twinblast_mauritiana.tgz">for download</a></p>
 
-<h2>Requirements</h2>
+<p>TwinBLAST uses HTML and Javascript and should work in all modern web-browsers.</p>
 
-<p>TwinBlast uses HTML and Javascript and should work in all modern web-browsers.</p>
+<h2>Instructions for the TwinBLAST Virtual Machine (VM)</h2>
 
-<p>Installation of TwinBlast server requires the following packages be installed:</p>
+<ol>
+<li>Download the VM containing TwinBLAST and all of its dependencies using the link towards the top of this page.</li>
+<li>Download and install VirtualBox if you do not already have it using <a href="https://www.virtualbox.org/wiki/Downloads">this link</a></li>
+<li>Launch VirtualBox Manager and follow these steps</li>
+<ol type="A">
+<li>Select "New" in the top left</li>
+<li>Specify a name for the machine</li>
+<li>Type: <b>Linux</b></li>
+<li>Version: <b>Ubuntu (64-bit)</b></li>
+<li>Click "Continue"</li>
+<li>Select <b>2048 MB</b> for memory size</li>
+<li>Click "Continue"</li>
+<li>Select "Use an existing virtual hard disk file"</li>
+<ul style="list-style-type:square">Choose the VDI downloaded in <b>step 1</b></ul>
+<li>Click "Create"</li>
+<li>Double click the machine designated by the name from <b>step B</b> to start the new VM</li>
+<ul style="list-style-type:square"><b>PLEASE NOTE</b>: from this point forward, all steps will take place <i>within the VM</i> that was just booted, not in the host machine</ul>
+</ol>
+</ol>
+
+<h2>Instructions for how to build a TwinBLAST server from scratch</h2>
+
+<p>The following packages are required in order to install and run TwinBLAST:</p>
 
 <ul>
 <li>Apache</li>
 <li>ExtJS</li>
+<li>MySQL</li>
 </ul><p>Perl Modules:  </p>
 
 <ul>
@@ -64,6 +88,8 @@ of <i>Drosophila mauritiana</i> lateral gene transfers loaded into it. Those res
 <li>JSON</li>
 <li>POSIX</li>
 <li>Bio::Graphics</li>
+<li>Config::IniFiles</li>
+<li>File::Slurp</li>
 </ul><h2>Installation</h2>
 
 <ol>
