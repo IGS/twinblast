@@ -91,34 +91,6 @@ if($file) {
     $fname = basename($file);
     $md5 = md5_hex($file);
 }
-=head
-if($qlist) {
-	$qlist = "$prefix/$qlist";
-    $qlist =~ s/\/\//\//g;
-	my @querys = read_file($qlist); #Tie::File not working correctly
-	my $total = scalar @querys;
-	print "Content-type: text/plain\n\n";
-	print "{total: $total,\nroot: [\n";
-	map {
-		if($_) {
-			chomp $_;
-			# Pull annotation note from DB
-			my $annot_note = $dbh->selectrow_array('SELECT cv.name FROM cv, curation WHERE curation.seq_id=? AND curation.cv_id=cv.id', undef, $_);
-
-			if(not defined $annot_note){
-				$annot_note='';
-			}
-			print to_json({'name' => $_,
-   	                       'annot' => $annot_note
-   	                      }).",\n";
-		}
-	} @querys[$start..$start+$limit];
-	print "]}";
-	$dbh->disconnect();
-	exit;
-}
-=cut
-
 
 # Deal with a bunch of blast files here
 if($list) {
