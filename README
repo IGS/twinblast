@@ -8,6 +8,12 @@ independantly scrollable panels. BioPerl (www.bioperl.org) is used to index
 raw BLAST reports and Bio::Graphics is used to draw pictograms of the BLAST
 hits.
 
+------------
+  Tutorial
+------------
+
+A walkthrough of how to setup an instance of TwinBLAST using a virtual machine
+can be found here http://igs.github.io/twinblast/ 
 
 ------------
 Requirements
