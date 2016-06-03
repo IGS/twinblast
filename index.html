@@ -51,7 +51,7 @@ of <i>Drosophila mauritiana</i> lateral gene transfers loaded into it. Those res
 <ol>
 <li>Download the VM containing TwinBLAST and all of its dependencies using the link towards the top of this page.</li>
 <li>Download and install VirtualBox if you do not already have it using <a href="https://www.virtualbox.org/wiki/Downloads">this link</a></li>
-<li>Launch VirtualBox Manager and follow these steps:<br><br>
+<li>Launch VirtualBox Manager and follow these steps:
 <p>
 <ol>
 <li>Select "New" in the top left</li>
@@ -69,20 +69,22 @@ of <i>Drosophila mauritiana</i> lateral gene transfers loaded into it. Those res
 </p>
 </li>
 <li>Navigate to TwinBLAST using Firefox and the URL: localhost/twinblast.html</li>
-<li>This is a default TwinBLAST page that requires the following inputs to be added in order to view the example data. Please note the arrows present on the page that let one expand and shrink the various panels as they see fit. With the top panel expanded, the following data can be entered:<br>
+<li>This is a default TwinBLAST page that requires the following inputs to be added in order to view the example data. Please note the arrows present on the page that let one expand and shrink the various panels as they see fit. With the top panel expanded, the following data can be entered:
+<p>
 <ol>
 <li>Blast File: SRX135546_UM_all_uniq_filtered.out (the contents of this file can be found within the VM at the path: /export/lgt/files/SRX135546_UM_all_uniq_filtered.out)</li>
 <li>Query List (optional): mauritiana_ids.txt (the contents of this file can be found at the path: /export/lgt/files/mauritiana_ids.txt. This optional file aims to refine the "query List" displayed to a specific subset of the main BLAST file. If this optional input is not specified, then all the results from the BLAST file will be displayed.)</li>
 <li>Left ID suffix: /1 (the chosen left ID suffix that follows each left/first query ID in the Blast File)</li>
 <li>Right ID suffix: /2 (the chosen right ID suffix that follows each right/second query ID in the Blast File)</li>
 </ol>
+</p>
 </li>
 <li>Once this information has been entered into the correct input areas, clicking "Reload" towards the bottom of the top panel will then populate the data within the "Query List" panel.</li>
 <li>After a dataset is loaded, either navigate to a particular ID using the "ID (prefix only)" input box under the "Analyze" header of the top panel or click on any of the IDs under the "Query List" panel.</li>
 <li>Each ID can be annotated using the "Analyze" section of the top panel. The default values "yes", "no", and "maybe" can be used or a custom value can be entered into the blank textbox after clicking the adjacent button. Once the annotation has been determined, click the refresh icon towards the bottom-right of the "Query List" panel to view that the curation note has been attached to the ID.</li>
 </ol>
 
-<h3>Customization</h3>
+<h4>Customization of the VM</h4>
 <p>If curation is not a concern, one can place their properly formatted BLAST file (matches format of /export/lgt/files/SRX135546_UM_all_uniq_filtered.out where each pair of the two BLAST search results follows one after the other) in /export/lgt/files/ and TwinBLAST is ready for use without the need for configuring MySQL. The following sections go into detail as to how to configure Apache, MySQL, and the VM itself in order to achieve thorough customization of TwinBLAST.</p>
 <h4>Apache</h4>
 <ul>
@@ -105,16 +107,33 @@ of <i>Drosophila mauritiana</i> lateral gene transfers loaded into it. Those res
 <pre><code>mysql -h localhost -u root</code></pre>
 </li>
 <li>
+<p>Once in the MySQL prompt, first create the new custom database</p>
+<pre><code>CREATE DATABASE custom_db_name</code></pre>
 </li>
-<li></li>
-<li></li>
-<li></li>
-<li></li>
-<li></li>
-<li></li>
-<li></li>
-<li></li>
-<li></li>
+<li>
+<p>Make sure TwinBLAST has permissions to make changes to the database</p>
+<pre><code>GRANT ALL on custom_db_name.* TO 'twinblast'@'localhost';</code></pre>
+</li>
+<li>
+<p>Switch to the new database to populate it</p>
+<pre><code>use custom_db_name</code></pre>
+</li>
+<li>
+<p>Add in the curation table that houses both the query ID and an ID to tie it to a particular curation note</p>
+<pre><code>CREATE TABLE curation(seq_id VARCHAR(100), cv_id INT, PRIMARY KEY(seq_id));</code></pre>
+</li>
+<li>
+<p>Create the table that houses the curation notes and insert the correct values into it</p>
+<pre><code>CREATE TABLE cv(id INT, name VARCHAR(100), PRIMARY KEY(name));
+INSERT INTO cv VALUES (1, ‘yes’);
+INSERT INTO cv VALUES (2, ‘no’);
+INSERT INTO cv VALUES (3, ‘maybe’);
+</code></pre>
+</li>
+<li><p>Now leave MySQL</p></li>
+<pre><code>quit</code></pre>
+<li>Copy lines 1-6 in '/var/www/html/conf/curation_db.ini' and make a new set of 6 lines replacing all instances of 'mauritiana' with the 'custom_db_name' specified in the MySQL step 2</li>
+<li>Modify line 10 in '/etc/apache2/conf.d/twinblast.conf' to the 'custom_db_name' specified in the MySQL step 2</li>
 </ol>
 
 <h4>Resizing the VM</h4>
