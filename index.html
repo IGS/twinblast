@@ -51,7 +51,7 @@ of <i>Drosophila mauritiana</i> lateral gene transfers loaded into it. Those res
 <ol>
 <li>Download the VM containing TwinBLAST and all of its dependencies using the link towards the top of this page.</li>
 <li>Download and install VirtualBox if you do not already have it using <a href="https://www.virtualbox.org/wiki/Downloads">this link</a></li>
-<li>Launch VirtualBox Manager and follow these steps:
+<li>Launch VirtualBox Manager and follow these steps:<br>
 <ol>
 <li>Select "New" in the top left</li>
 <li>Specify a name for the machine</li>
@@ -67,7 +67,7 @@ of <i>Drosophila mauritiana</i> lateral gene transfers loaded into it. Those res
 </ol>
 </li>
 <li>Navigate to TwinBLAST using Firefox and the URL: localhost/twinblast.html</li>
-<li>This is a default TwinBLAST page that requires the following inputs to be added in order to view the example data. Please note the arrows present on the page that let one expand and shrink the various panels as they see fit. With the top panel expanded, the following data can be entered:
+<li>This is a default TwinBLAST page that requires the following inputs to be added in order to view the example data. Please note the arrows present on the page that let one expand and shrink the various panels as they see fit. With the top panel expanded, the following data can be entered:<br>
 <ol>
 <li>Blast File: SRX135546_UM_all_uniq_filtered.out (the contents of this file can be found within the VM at the path: /export/lgt/files/SRX135546_UM_all_uniq_filtered.out)</li>
 <li>Query List (optional): mauritiana_ids.txt (the contents of this file can be found at the path: /export/lgt/files/mauritiana_ids.txt. This optional file aims to refine the "query List" displayed to a specific subset of the main BLAST file. If this optional input is not specified, then all the results from the BLAST file will be displayed.)</li>
@@ -79,6 +79,46 @@ of <i>Drosophila mauritiana</i> lateral gene transfers loaded into it. Those res
 <li>After a dataset is loaded, either navigate to a particular ID using the "ID (prefix only)" input box under the "Analyze" header of the top panel or click on any of the IDs under the "Query List" panel.</li>
 <li>Each ID can be annotated using the "Analyze" section of the top panel. The default values "yes", "no", and "maybe" can be used or a custom value can be entered into the blank textbox after clicking the adjacent button. Once the annotation has been determined, click the refresh icon towards the bottom-right of the "Query List" panel to view that the curation note has been attached to the ID.</li>
 </ol>
+
+<h3>Customization</h3>
+<p>If curation is not a concern, one can place their properly formatted BLAST file (matches format of /export/lgt/files/SRX135546_UM_all_uniq_filtered.out where each pair of the two BLAST search results follows one after the other) in /export/lgt/files/ and TwinBLAST is ready for use without the need for configuring MySQL. The following sections go into detail as to how to configure Apache, MySQL, and the VM itself in order to achieve thorough customization of TwinBLAST.</p>
+<h4>Apache</h4>
+<ul>
+<li>The main Apache configuration occurs within '/etc/apache2/apache2.conf'</li>
+<li>Changing lines 73 and 165 determine where the server and CGI executables, respectively, can be found</li>
+<li>Line 151 denotes that the conf file at /etc/apache2/conf.d/twinblast.conf will be used for obtaining paths to directories like where to store the BLAST image outputs</li>
+<li>The environment variable CHOSEN_DB in 'twinblast.conf' needs to be changed depending on which MySQL DB is desired for use when annotating results</li>
+</ul>
+<h4>MySQL</h4>
+<p>While MySQL is used in the default setup of TwinBLAST, it should be possible to use other databases like PostgreSQL with some modifications to the following scripts and file to convert from MySQL syntax to another database's format. Note that the .ini file needs to be changed to correspond with 'twinblast.conf' mentioned in the Apache section.</p>
+<ul>
+<li>/var/www/html/cgi/guiblast</li>
+<li>/var/www/html/cgi/twinblastDB</li>
+<li>/var/www/html/conf/curation_db.ini</li>
+</ul>
+<p>In order to add a new database compatible with the current set of scripts, follow these steps start in a terminal:</p>
+<ol>
+<li>
+<p>Login to MySQL</p>
+<pre><code>mysql -h localhost -u root</code></pre>
+</li>
+<li>
+
+</li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+</ol>
+
+<h4>Resizing the VM</h4>
+<p>The most recent version of the TwinBLAST VM has about 560 MB in free space available. If more storage is required the VM can be resized using the following steps assuming that the host computer has enough space to accommodate the size increase. A walkthrough for each step necessary to increase space and then partition that space can be found <a href="http://derekmolloy.ie/resize-a-virtualbox-disk/">here</a>.
+</p>
 
 <h2>Instructions for how to build a TwinBLAST server from scratch</h2>
 
