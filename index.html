@@ -66,6 +66,18 @@ of <i>Drosophila mauritiana</i> lateral gene transfers loaded into it. Those res
 <li><b>PLEASE NOTE</b>: from this point forward, all steps will take place <i>within the VM</i> that was just booted, not in the host machine</li>
 </ol>
 </li>
+<li>Navigate to TwinBLAST using Firefox and the URL: localhost/twinblast.html</li>
+<li>This is a default TwinBLAST page that requires the following inputs to be added in order to view the example data. Please note the arrows present on the page that let one expand and shrink the various panels as they see fit. With the top panel expanded, the following data can be entered:
+<ol>
+<li>Blast File: SRX135546_UM_all_uniq_filtered.out (the contents of this file can be found within the VM at the path: /export/lgt/files/SRX135546_UM_all_uniq_filtered.out)</li>
+<li>Query List (optional): mauritiana_ids.txt (the contents of this file can be found at the path: /export/lgt/files/mauritiana_ids.txt. This optional file aims to refine the "query List" displayed to a specific subset of the main BLAST file. If this optional input is not specified, then all the results from the BLAST file will be displayed.)</li>
+<li>Left ID suffix: /1 (the chosen left ID suffix that follows each left/first query ID in the Blast File)</li>
+<li>Right ID suffix: /2 (the chosen right ID suffix that follows each right/second query ID in the Blast File)</li>
+</ol>
+</li>
+<li>Once this information has been entered into the correct input areas, clicking "Reload" towards the bottom of the top panel will then populate the data within the "Query List" panel.</li>
+<li>After a dataset is loaded, either navigate to a particular ID using the "ID (prefix only)" input box under the "Analyze" header of the top panel or click on any of the IDs under the "Query List" panel.</li>
+<li>Each ID can be annotated using the "Analyze" section of the top panel. The default values "yes", "no", and "maybe" can be used or a custom value can be entered into the blank textbox after clicking the adjacent button. Once the annotation has been determined, click the refresh icon towards the bottom-right of the "Query List" panel to view that the curation note has been attached to the ID.</li>
 </ol>
 
 <h2>Instructions for how to build a TwinBLAST server from scratch</h2>
