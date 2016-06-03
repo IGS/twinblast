@@ -40,6 +40,10 @@ my $pw = $conf->val($chosen_db, 'password');
 my $dbh = DBI->connect("DBI:mysql:database=$db;host=$host",
 						"$user", "$pw");
 
+# Take no chances, lock it all down for each call/session for curation
+# and use transactions to guarantee data integrity.
+$dbh->do("SET autocommit=0");
+$dbh->do("LOCK TABLES curation WRITE, cv WRITE");
 my $cv_id = $dbh->selectrow_array('SELECT id FROM cv WHERE name=?', undef, $annot);
 
 # Need to check if this cv entry already exists. If it does, can insert 
@@ -59,7 +63,18 @@ if(defined $cv_id){
 	# this new curation label actually made it into the table
 	$cv_id = $dbh->selectrow_array('SELECT id FROM cv WHERE name=?', undef, $annot);
 	$dbh->do("REPLACE INTO curation VALUES(?, ?)", undef, $id, $cv_id);
-
 }
 
+my $cur_check = $dbh->selectrow_array('SELECT seq_id FROM curation, cv WHERE '. 
+									  'curation.seq_id=? AND cv_id=cv.id AND cv.name=?',
+									  undef, $id, $annot);
+my $cv_check = $dbh->selectrow_array('SELECT id FROM cv WHERE name=?', undef, $annot);
+
+if(defined $cur_check and defined $cv_check){
+	$dbh->do("COMMIT");
+} else {
+	$dbh->do("ROLLBACK");
+}
+
+$dbh->do("UNLOCK TABLES");
 $dbh->disconnect();
