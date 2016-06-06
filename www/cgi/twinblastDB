@@ -40,41 +40,36 @@ my $pw = $conf->val($chosen_db, 'password');
 my $dbh = DBI->connect("DBI:mysql:database=$db;host=$host",
 						"$user", "$pw");
 
-# Take no chances, lock it all down for each call/session for curation
-# and use transactions to guarantee data integrity.
-$dbh->do("SET autocommit=0");
-$dbh->do("LOCK TABLES curation WRITE, cv WRITE");
-my $cv_id = $dbh->selectrow_array('SELECT id FROM cv WHERE name=?', undef, $annot);
+# Auto-increment locks the table during each statement so will avoid concurrency.
+my $cv_name = &getCVname($annot);
 
 # Need to check if this cv entry already exists. If it does, can insert 
 # straight away. Else, need to add this entry to the cv table.
-if(defined $cv_id){
+if(defined $cv_name){
 
-	$dbh->do("REPLACE INTO curation VALUES(?, ?)", undef, $id, $cv_id);
+	&updateCuration($id, $cv_name);
 
 } else {
 
-	my $max_cv_id = $dbh->selectrow_array('SELECT MAX(id) FROM cv', undef);
-
 	# Already checked for their presence, thus insert instead of replace
-	$dbh->do("INSERT INTO cv VALUES(?, ?)", undef, ++$max_cv_id, $annot);
+	$dbh->do("INSERT INTO cv (name) VALUES(?)", undef, $annot);
 
 	# Re-perform this check as a safety measure of sorts to make sure 
 	# this new curation label actually made it into the table
-	$cv_id = $dbh->selectrow_array('SELECT id FROM cv WHERE name=?', undef, $annot);
-	$dbh->do("REPLACE INTO curation VALUES(?, ?)", undef, $id, $cv_id);
+	$cv_name = &getCVname($annot);
+	&updateCuration($id, $cv_name);
 }
 
-my $cur_check = $dbh->selectrow_array('SELECT seq_id FROM curation, cv WHERE '. 
-									  'curation.seq_id=? AND cv_id=cv.id AND cv.name=?',
-									  undef, $id, $annot);
-my $cv_check = $dbh->selectrow_array('SELECT id FROM cv WHERE name=?', undef, $annot);
-
-if(defined $cur_check and defined $cv_check){
-	$dbh->do("COMMIT");
-} else {
-	$dbh->do("ROLLBACK");
-}
-
-$dbh->do("UNLOCK TABLES");
 $dbh->disconnect();
+
+sub getCVname {
+	my($annot) = @_;
+	my $cv_name;
+	$cv_name = $dbh->selectrow_array('SELECT id FROM cv WHERE name=?', undef, $annot);
+	return $cv_name;
+}
+
+sub updateCuration {
+	my ($id, $cv_name) = @_;
+	$dbh->do("REPLACE INTO curation VALUES(?, ?)", undef, $id, $cv_name);
+}
