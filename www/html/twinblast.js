@@ -3,8 +3,11 @@ Ext.onReady(function(){
 	// Path to guiblast CGI script
 	var GUIBLAST_URL = '/cgi-bin/guiblast'; 
 
-	// Path to TwinBlast DB access component for annotation/curation
+	// Path to TwinBLAST DB access component for annotation/curation
 	var CURATION_URL = '/cgi-bin/twinblastDB'; 
+
+	// Path to TwinBLAST DB access component for annotation/curation
+	var REPORT_URL = '/cgi-bin/generateReport'; 
 
     // Pull out what's in the URL
     var vars = getUrlVars();
@@ -84,9 +87,8 @@ Ext.onReady(function(){
         layout: {type: 'vbox',
                  align: 'left'},
 
-        //hidden: !single_file,
         items: [{
-            fieldLabel: 'Blast File',
+            fieldLabel: 'BLAST File',
             name: 'blast_file',
             value: file,
             width: '100%'
@@ -112,14 +114,18 @@ Ext.onReady(function(){
         defaultType: 'textfield',
         hidden: single_file,
         items: [{
-            fieldLabel: 'Left BLAST output list',
+            fieldLabel: 'Left BLAST file',
             name: 'blast1',
             value: left_file
         },{
-            fieldLabel: 'Right BLAST output list',
+            fieldLabel: 'Right BLAST file',
             name: 'blast2',
             value: right_file
-        }]
+        },{
+            fieldLabel: 'Query List (optional)',
+            name: 'qlist',
+            value: qlist
+		}]
     }));
 
     var type_radiogroup = Ext.create('Ext.form.RadioGroup', {
@@ -127,26 +133,32 @@ Ext.onReady(function(){
         defaults: {flex: 1},
         
         layout: 'hbox',
+		// For now these will be marked hidden as it's probably 
+		// better to normalize inputs with the new util scripts
+		// to guarantee success in their processing instead of 
+		// letting the users have too many options.
         items: [{
-            boxLabel: '1 BLAST search, 2 ids',
+            boxLabel: '1 BLAST search, 2 IDs',
             inputValue: '1',
             checked: single_file,
-            hidden: true,
+            hidden: true, 
             name: 'num_lists',
             handler: function() {
                 double_list_form.show();
                 single_list_form.hide();
             }
-        }/*,{
-            boxLabel: '2 BLAST searches, 1 id',
+        },{
+            boxLabel: '2 BLAST searches, 1 ID',
             inputValue: '2',
             checked: !single_file,
+			hidden: true,
             name: 'num_lists',
             handler: function() {
                 double_list_form.hide();
                 single_list_form.show();
             }
-        }*/]});
+        }
+		]});
 
 	var annot_radiogroup = Ext.create('Ext.form.RadioGroup', {
 		fieldLabel: 'LGT detected',
@@ -232,7 +244,7 @@ Ext.onReady(function(){
     
     // Form    
     var toppanel =  Ext.create('Ext.panel.Panel', ({
-//        layout: 'fit',
+		//        layout: 'fit',
         //        id: 'top',
         frame: true,
         region: 'north',
@@ -240,7 +252,7 @@ Ext.onReady(function(){
         collapseMode: 'header',
         collapsed: collapse_form,
         collapsible: true,
-        title: 'TwinBlast',
+        title: 'TwinBLAST',
         defaultType: 'textfield',
         items: [form
         ],
@@ -295,7 +307,14 @@ Ext.onReady(function(){
             store: linkStore,   // same store GridPanel is using
             dock: 'bottom',
             displayInfo: true
-        }]
+        },{
+            xtype: 'button',
+			text: 'download report',
+			id: 'report',
+            handler: function() {
+                generateReport();
+            	}
+		}]
     }));
     // update panel body on selection change
     gridpanel.getSelectionModel().on('selectionchange', function(sm, selectedRecord) {
@@ -338,7 +357,44 @@ Ext.onReady(function(){
         return vars;
     } 
 
-    function genCustomList() {
+    function generateReport(newvals) {
+		var FILE_PATH = '/tmpblast/testing.txt';
+		Ext.getCmp('report').setText('generating report, please wait...');
+		Ext.getCmp('report').setDisabled(true);
+        var vals = form.getValues();
+        Ext.apply(vals,newvals);
+		var report_config = {
+            'list' : vals.blast,
+            'file' : vals.blast_file,
+			'qlist': vals.qlist,
+			'printreport' : 1
+		}
+		if(vals.blast_file || vals.blast){
+			Ext.Ajax.request({
+				url: REPORT_URL,
+				// This timeout is exceedingly high, can reduce it but if the 
+				// files are huge it will take quite some time. 
+				timeout: 600000, 
+				params: report_config,
+            	success: function(response) {
+                	var res = Ext.JSON.decode(response.responseText,true);
+					if(res.success == 1) {
+						// file should be ready now, re-enable that button
+						Ext.getCmp('report').setText('download report');
+						Ext.getCmp('report').setDisabled(false);	
+
+						var a = document.createElement("a"); // download results
+						a.href = res.path;
+						a.download = "twinBLASTreport.tsv";
+						a.target = "_blank";
+						document.body.appendChild(a);
+						a.click();
+						document.body.removeChild(a); // clean up
+						delete a;
+					}
+				}
+			});
+		}
     } 
 
     function curatePair() {
@@ -353,12 +409,11 @@ Ext.onReady(function(){
 		}
 		// Simple check to ensure that this only proceeds if ID is defined
 		if(seq_id){
-			console.log('made it');
 			Ext.Ajax.request({
 				url: CURATION_URL,
 				params: annot_config
 			});
-			reloadPanels({});
+			linkStore.load();
 		}
     } 
 
