@@ -498,6 +498,7 @@ Ext.onReady(function(){
         Ext.Ajax.request({
             url: GUIBLAST_URL,
             params: config,
+			timeout: 120000, 
             success: function(response) {
                 var res = Ext.JSON.decode(response.responseText,true);
                 if(res) {
@@ -511,7 +512,7 @@ Ext.onReady(function(){
                 }
             },
             failure: function(response) {
-                  vp.setLoading('Hmmm... I appear to be having trouble somewhere. Just wait a second and it might come back.');
+                  vp.setLoading('Hmmm... I appear to be having trouble somewhere. Try refresh or wait a little longer and it might come back.');
                   setPanelsLoading(false);
             }
         });            
@@ -524,6 +525,7 @@ Ext.onReady(function(){
         Ext.Ajax.request({
             url: GUIBLAST_URL,
             params: config,
+			timeout: 120000, 
             success: function(response) {
                 var res = Ext.JSON.decode(response.responseText,true);
                 if((!config.printlist && res) || (res && config.printlist && !res.total)) {
